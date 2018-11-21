@@ -8,8 +8,19 @@ class Agent(object):
         self.player_type = player_type
         self.action = EGreedy(self.game)
 
+    def select_action(self, epsilon=0.0, q_learning=None, state=None):
+        if self.player_type == "human":
+            action = self.get_input()
+        elif self.player_type == "random":
+            action = self.action.get_random_action()
+        elif self.player_type == "qlearning":
+            action = self.action.get_egreedy_action(epsilon, q_learning, state)
+        else:
+            print "Undefined player type"
+            raise NotImplementedError
+        return action
 
-    def do_action(self):
+    def do_action(self, action):
         """
         Perform an action based on the player type. An actions is defined as
         placing a mark in one of the empty cells. Currently the game will support
@@ -18,17 +29,7 @@ class Agent(object):
         - random: a bot that just places marks randomly in cells
         - qlearning: a smarter bot (hopefully) that learns what the best options are
         """
-
-        if self.player_type == "human":
-            pos = self.get_input()
-        elif self.player_type == "random":
-            pos = self.action.get_random_action()
-        elif self.player_type == "qlearning":
-            raise NotImplementedError
-        else:
-            print "Undefined player type"
-            raise NotImplementedError
-
+        pos = [action//3, action%3]
         self.game.set_cell(pos, self.mark)
         self.board.update(pos, self.mark)
 
@@ -50,8 +51,8 @@ class Agent(object):
 
         return [user_input//3, user_input%3]
 
-    def reset(self):
-        pass
+    def get_type(self):
+        return self.player_type
 
     def get_mark(self):
         """

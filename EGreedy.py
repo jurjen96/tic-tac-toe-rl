@@ -5,21 +5,48 @@ class EGreedy(object):
     def __init__(self, game):
         self.game = game
 
-    def choose_action(self):
-        pass
-
     def get_random_action(self):
+        #maybe add here preference for actions it has never done before
         valid_cells = self.get_valid_actions()
         valid_index = [index for index, cell in enumerate(valid_cells) if cell == 1]
-        rnd_index = random.choice(valid_index)
-        pos = [rnd_index//3, rnd_index%3]
-        return pos# a position
+        action = random.choice(valid_index)
+        # pos = [rnd_index//3, rnd_index%3]
+        # return pos# a position
+        return action
 
-    def get_best_action(self):
-        pass
+    def get_best_action(self, q_learning, state):
+        valid_cells = self.get_valid_actions()
+        actions = q_learning.get_actions(state)
+        explotation_actions = actions.keys()
+        if not explotation_actions:
+            return self.get_random_action()
+        if len(valid_cells) != len(explotation_actions): # have a preference for exploration of states it has not seen before
+            # find the difference between valid_cells
+            to_explore_cells = []
+            for cell_index in valid_cells:
+                if cell_index not in explotation_actions: #set(val1).difference(val2)
+                    print "appending"
+                    to_explore_cells.append(cell_index)
 
-    def get_egreedy_action(self):
-        pass
+            if to_explore_cells:
+                return random.choice(to_explore_cells)
+
+        print "USING EXPLOTATION"
+
+        action_values = q_learning.get_action_values(state)
+        max_index = action_values.index(max(action_values))
+        return explotation_actions[max_index]
+
+
+    def get_egreedy_action(self, epsilon, q_learning, state):
+        random_nr = random.uniform(0, 1)
+        if random_nr > epsilon:
+            action = self.get_best_action(q_learning, state)
+        else:
+            action = self.get_random_action()
+
+        return action
+
 
     def get_valid_actions(self):
         """

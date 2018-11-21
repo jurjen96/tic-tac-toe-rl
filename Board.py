@@ -9,9 +9,9 @@ class Board(object):
                       [" ", " ", " "]]
 
     def reset(self):
-        self.board = [[0, 0, 0],
-                      [0, 0, 0],
-                      [0, 0, 0]]
+        self.board = [[" ", " ", " "],
+                      [" ", " ", " "],
+                      [" ", " ", " "]]
 
 
     def update(self, pos, mark):
