@@ -1,13 +1,10 @@
+import matplotlib.pyplot as plt
+
 from Board import Board
 from Agent import Agent
 from Game import Game
-from EGreedy import EGreedy
-from QLearning import QLearning
-from State import State
 
-
-def main():
-
+def train(board, game, player_x, player_o):
     # Parameters:
     decay_rate = 0.01   # decay rate for decreasing the epsilon value per trail
     max_epsilon = 1.0   # max value of epsilon
@@ -16,71 +13,84 @@ def main():
     alpha = 0.7         # learning rate
     gamma = 0.9         # discount reward
 
-    max_runs = 10000
+    max_games = 50 #40
+    max_runs = 800 #100
 
-    board = Board()
-    game = Game()
-    q_learning = QLearning()
-    action = EGreedy(game)
-    player_x = Agent("X", board, game, "qlearning")
-    player_o = Agent("O", board, game, "random")
+
+    # action = EGreedy(game)
     players = [player_x, player_o]
     player_x_won = 0
     player_o_won = 0
     draw = 0
+    fraction_x = []
+    fraction_o = []
+    fraction_draw = []
 
-    for run in range(max_runs):
+    for _ in range(max_runs): # train
+        for _ in range(max_games):
 
-        game_finished = False
-        while not game_finished:
-            for player in players:
-                if player.get_type() == "qlearning":
+            game_finished = False
+            print "---"*20
+            print "New epoch"
+            while not game_finished:
+                for player in players:
                     state = game.get_state()
-                    selected_action = player.select_action(epsilon, q_learning, state)
+                    selected_action = player.select_action(epsilon, state)
+
+                    player.store_action(selected_action, state, game.get_game())
+
                     player.do_action(selected_action)
                     new_state = game.get_state()
-                    #get the next possible actions
-                    possible_actions = action.get_valid_actions()
+
 
                     if game.has_won(player.get_mark()) or game.is_tie():
-                        # print player.get_mark()
-                        pass
-
-                    reward = game.get_reward(player.get_mark())
-                    # print "REWARD " + str(reward)
-                    q_learning.update_q(state, selected_action, new_state, q_learning, possible_actions, alpha, reward, gamma)
-
-                    if reward:
                         game_finished = True
                         break
-                else:
-                    selected_action = player.select_action()
-                    player.do_action(selected_action)
 
-                    if game.has_won(player.get_mark()) or game.is_tie():
-                        break
+            if game.has_won(player_x.get_mark()):
+                player_x_won += 1
+            elif game.has_won(player_o.get_mark()):
+                player_o_won += 1
+            else:
+                draw += 1
 
+            print "Learning from game"
+            reward = game.get_reward(player_x.get_mark())
+            player_x.learn_from_game(new_state, alpha, reward, gamma)
+            player_x.reset()
 
-        if game.has_won(player_x.get_mark()):
-            player_x_won += 1
-        elif game.has_won(player_o.get_mark()):
-            player_o_won += 1
-        else:
-            draw += 1
-        # print game.get_reward(player_x.get_mark())
-        # print game.get_reward(player_o.get_mark())
-        #
-        # board.print_game()
-        # print "X has won: " + str(game.has_won(player_x.get_mark()))
-        # print "O has won: " + str(game.has_won(player_o.get_mark()))
+            board.print_game()
 
-        game.reset()
-        board.reset()
+            game.reset()
+            board.reset()
 
-    print len(q_learning.q)
-    print "Player x won: " + str(player_x_won)
-    print "Player o won: " + str(player_o_won)
-    print "It was a draw: " + str(draw)
+        fraction_o.append(player_o_won / float(max_games))
+        fraction_x.append(player_x_won / float(max_games))
+        fraction_draw.append(draw / float(max_games))
+        print "Player x won: " + str(player_x_won)
+        print "Player o won: " + str(player_o_won)
+        print "It was a draw: " + str(draw)
+        player_o_won = 0
+        player_x_won = 0
+        draw = 0
+
+    print fraction_o
+    print fraction_x
+    print fraction_draw
+
+    plt.figure(0)
+    plt.plot(fraction_o)
+    plt.plot(fraction_x)
+    plt.plot(fraction_draw)
+    plt.ylabel("fraction")
+    plt.show()
+
+def main():
+    board = Board()
+    game = Game()
+    player_x = Agent("X", board, game, "qlearning")
+    player_o = Agent("O", board, game, "random")
+    train(board, game, player_x, player_o)
 
 if __name__ == "__main__":
     print "Starting the tic-tac-toe game"

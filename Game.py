@@ -1,5 +1,4 @@
-from EGreedy import EGreedy
-from State import State
+from Action import Action
 
 class Game(object):
     def __init__(self):
@@ -13,7 +12,7 @@ class Game(object):
         self.game = [0] * 9
         self.tie = False
         self.mark_that_won = ""
-        self.action = EGreedy(self)
+        self.action = Action(self)
 
     def get_game(self):
         """
@@ -105,10 +104,11 @@ class Game(object):
             return -0.5
 
         if self.mark_that_won == "":
+            print "Nobody has won"
             return 0
         elif mark == self.mark_that_won:
             return 1
         return -1
 
     def get_state(self):
-        return State(self.game)
+        return ''.join(str(i) for i in self.game)
