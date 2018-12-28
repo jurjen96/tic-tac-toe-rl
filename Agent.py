@@ -12,12 +12,27 @@ class Agent(object):
         self.ordered_actions = []
 
     def reset(self):
+        """Resets the list of actions taken"""
         self.ordered_actions = []
 
     def store_action(self, action, state, game):
+        """
+        Store the action taken in an ordered list of actions taken during the game
+        """
         self.ordered_actions.append({"action":action, "state":state, "game":list(game)})
 
     def select_action(self, epsilon=0.0, state=None):
+        """
+        Select the action based on the players types
+
+        @param epsilon: the E-greedy action value. Determines if a random actions
+                        (exploration) should be chosen over learned Q-values
+                        (exploitation).
+        @param state: the current state of the game, used to determine the available
+                      actions
+
+        @return the index of where the marker will be placed (the action)
+        """
         if self.player_type == "human":
             action = self.get_input()
         elif self.player_type == "random":
@@ -29,49 +44,29 @@ class Agent(object):
             raise NotImplementedError
         return action
 
-    def learn_from_game(self, last_state, alpha, reward, gamma):
-        if self.player_type == "qlearning":
-            for index, action in enumerate(self.ordered_actions):
-                if index + 1 < len(self.ordered_actions):
-                    next_state = self.ordered_actions[index + 1]["state"]
-                else:
-                    next_state = None
+    def learn_from_game(self, alpha, reward, gamma):
+        if not self.player_type == "qlearning": # the other type of agents do not learn
+            return
 
-                state = action["state"]
-                selected_action = action["action"]
-                game = action["game"]
+        for index, action in enumerate(self.ordered_actions):
+            if index + 1 < len(self.ordered_actions):
+                next_state = self.ordered_actions[index + 1]["state"]
+            else:
+                next_state = None
 
-                # Only the last state receives a reward
-                if index == len(self.ordered_actions) - 1:
-                    state_reward = reward
-                else:
-                    state_reward = 0
+            state = action["state"]
+            selected_action = action["action"]
+            game = action["game"]
 
-                possible_actions = self.action.get_valid_actions(game)
-                self.q_learning.update_q(state, selected_action, next_state, possible_actions,
-                                         alpha, state_reward, gamma)
+            # Only the last state receives a reward
+            if index == len(self.ordered_actions) - 1:
+                state_reward = reward
+            else:
+                state_reward = 0
 
-            # action = self.ordered_actions.pop()
-            # state = action["state"]
-            # selected_action = action["action"]
-            # game = action["game"]
-            #
-            # possible_actions = self.action.get_valid_actions(game)
-            # self.q_learning.update_q(state, selected_action, last_state, possible_actions, alpha, reward, gamma)
-            #
-            # last_state = state
-            #
-            # for action in reversed(self.ordered_actions):
-            #     state = action["state"]
-            #     # print state
-            #     selected_action = action["action"]
-            #     game = action["game"] #TODO game does not seem to change
-            #     #TODO set reward, based on last action
-            #     reward = self.action.get_best_action(self.q_learning, last_state) #should this not be in the last statye
-            #
-            #     possible_actions = self.action.get_valid_actions(game)
-            #     self.q_learning.update_q(state, selected_action, last_state, possible_actions, alpha, reward, gamma)
-            #     last_state = state
+            possible_actions = self.action.get_valid_actions(game)
+            self.q_learning.update_q(state, selected_action, next_state, possible_actions,
+                                     alpha, state_reward, gamma)
 
     def do_action(self, action):
         """
@@ -98,13 +93,16 @@ class Agent(object):
         while True:
             user_input = input("Your turn " + str(self.get_mark()) + " (0-8): ")
             valid_actions = self.action.get_valid_actions()
-            if valid_actions[user_input] == 1:
+            if user_input >= 0 and user_input < 9 and valid_actions[user_input] == 1:
                 break
             print "Invallid turn, please try another cell"
 
-        return [user_input//3, user_input%3]
+        return user_input
 
     def get_type(self):
+        """
+        Return the type of user: human, random, qlearning
+        """
         return self.player_type
 
     def get_mark(self):

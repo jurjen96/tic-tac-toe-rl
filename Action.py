@@ -17,16 +17,6 @@ class Action(object):
         explotation_actions = actions.keys()
         if not explotation_actions:
             return self.get_random_action()
-        # if len(valid_cells) != len(explotation_actions): # have a preference for exploration of states it has not seen before
-        #     # find the difference between valid_cells
-        #     to_explore_cells = []
-        #     for cell_index in valid_cells:
-        #         if cell_index not in explotation_actions: #set(val1).difference(val2)
-        #             print "appending"
-        #             to_explore_cells.append(cell_index)
-        #
-        #     if to_explore_cells:
-        #         return random.choice(to_explore_cells)
 
         action_values = q_learning.get_action_values(state)
         max_index = action_values.index(max(action_values))
