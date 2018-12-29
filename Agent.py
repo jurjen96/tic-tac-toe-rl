@@ -19,7 +19,7 @@ class Agent(object):
         """
         Store the action taken in an ordered list of actions taken during the game
         """
-        self.ordered_actions.append({"action":action, "state":state, "game":list(game)})
+        self.ordered_actions.append({"action":action, "state":state, "game_layout":list(game)})
 
     def select_action(self, epsilon=0.0, state=None):
         """
@@ -45,18 +45,24 @@ class Agent(object):
         return action
 
     def learn_from_game(self, alpha, reward, gamma):
+        """
+        Update the Q-table if the players type is qlearning. Updating the Q-table
+        happens by going back through the actions the player took until the game
+        ended. Every action will go through the Q-learning update rule/equation.
+        """
         if not self.player_type == "qlearning": # the other type of agents do not learn
             return
 
         for index, action in enumerate(self.ordered_actions):
             if index + 1 < len(self.ordered_actions):
                 next_state = self.ordered_actions[index + 1]["state"]
-            else:
+            else: # This is the last action before the game ended (no further states)
                 next_state = None
 
-            state = action["state"]
-            selected_action = action["action"]
-            game = action["game"]
+            state = action["state"] # get the state before the action was executed
+                                    # string representation of the game layout
+            selected_action = action["action"] # get the action
+            game = action["game_layout"] # get the current game layout as a list
 
             # Only the last state receives a reward
             if index == len(self.ordered_actions) - 1:
@@ -91,13 +97,20 @@ class Agent(object):
         self.board.print_game()
 
         while True:
-            user_input = input("Your turn " + str(self.get_mark()) + " (0-8): ")
+            user_input = raw_input("Your turn " + str(self.get_mark()) + " (0-8 or 'q' to quit): ")
             valid_actions = self.action.get_valid_actions()
-            if user_input >= 0 and user_input < 9 and valid_actions[user_input] == 1:
-                break
+            if user_input.isalpha() and user_input == "q":
+                return user_input
+            elif user_input.isalpha():
+                print "Invallid character, please try again"
+                continue
+
+            if (int(user_input) >= 0 and int(user_input) < 9 and \
+                    valid_actions[int(user_input)] == 1):
+                return int(user_input)
             print "Invallid turn, please try another cell"
 
-        return user_input
+
 
     def get_type(self):
         """

@@ -20,11 +20,19 @@ class Game(object):
         self.epsilon = 0.1       # for greedy selection
 
     def play_and_learn(self, players):
+        """
+        Play a single game of tic-tac-toe with the players and let the players,
+        that use q-learning, learn from the game.
+        """
+        # Play a single game
         game_finished = False
         while not game_finished:
             for player in players:
                 state = self.get_state()
                 selected_action = player.select_action(self.epsilon, state)
+
+                if selected_action == "q": # keep playing the game, until q is pressed
+                    return "quit"
 
                 player.store_action(selected_action, state, self.get_game())
 
@@ -34,10 +42,13 @@ class Game(object):
                     game_finished = True
                     break
 
+        # Learn from the game
         for player in players:
             reward = self.get_reward(player.get_mark())
             player.learn_from_game(self.alpha, reward, self.gamma)
             player.reset()
+
+        return "success"
 
     def get_game(self):
         """

@@ -16,10 +16,12 @@ def train(board, game, player_x, player_o):
     the time in the last runs (e.q. fraction of 0.9), we can conclude that the
     player is performing better over the number of games it played.
     """
-    max_games = 40
-    max_runs = 600
+    max_games = 100
+    max_runs = 400
 
     players = [player_x, player_o]
+    # The next few variables are used to store the progress for every run and
+    # game.
     player_x_won = 0
     player_o_won = 0
     draw = 0
@@ -30,7 +32,7 @@ def train(board, game, player_x, player_o):
     for _ in range(max_runs): # train
         for _ in range(max_games):
             print "\nNew game"
-            game.play_and_learn(players)
+            game.play_and_learn(players) # play a single game and learn from it
 
             if game.has_won(player_x.get_mark()):
                 player_x_won += 1
@@ -52,24 +54,30 @@ def train(board, game, player_x, player_o):
         player_x_won = 0
         draw = 0
 
+    # Uncomment the following lines to see in graph format how the players
+    # performed
     # plt.figure(0)
+    # plt.title("Random Player (X) vs Q-learning (O)")
     # plt.plot(fraction_o)
     # plt.plot(fraction_x)
     # plt.plot(fraction_draw)
-    # labels = ['Player O won', 'Player X won', 'Draw']
+    # labels = ["Player O won", "Player X won", "Draw"]
     # plt.legend(labels)
-    # plt.ylabel("fraction")
+    # plt.ylabel("Fraction")
+    # plt.ylabel("Nr. runs")
     # plt.show()
 
 def play(game, board, player_x, player_o):
     """ Play a single game against the bot"""
     players = [player_x, player_o]
-    game.play_and_learn(players)
+    status = game.play_and_learn(players)
 
     board.print_game()
 
     game.reset()
     board.reset()
+
+    return status
 
 def main():
     board = Board()
@@ -81,15 +89,18 @@ def main():
     print "|                   Training the bot                       |"
     print "---" * 20
     time.sleep(3)
+
     train(board, game, player_x, player_o)
 
     print "\n\n\n"
     print "---" * 20
     print "|               Playing against the bot                    |"
     print "---" * 20
+
     player_o = Agent("O", board, game, "human")
-    while True:
-        play(game, board, player_x, player_o)
+    status = "success"
+    while status != "quit":
+        status = play(game, board, player_x, player_o)
 
 if __name__ == "__main__":
     print "Starting the tic-tac-toe game"
